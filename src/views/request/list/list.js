@@ -1,5 +1,5 @@
 // 필요한 React 및 CoreUI 컴포넌트 및 기타 라이브러리 가져오기
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   CTable,
   CTableBody,
@@ -14,18 +14,15 @@ import {
   CFormInput,
   CFormCheck,
 } from '@coreui/react'
-
-// 가상의 유저 정보 수정 요청 데이터 (실제 데이터는 여기 대신 서버에서 가져와야 함)
-const userModificationRequests = [
-  { id: 1, userId: 1, userName: '사용자1', request: '이름 변경 요청' },
-  { id: 2, userId: 2, userName: '사용자2', request: '권한 수정 요청' },
-  // ... 추가적인 유저 정보 수정 요청 데이터
-]
+import axios from 'axios'
 
 // React 함수형 컴포넌트 정의
 const UserModificationTable = () => {
   // 모달 상태를 관리하는 상태 변수
   const [modal, setModal] = useState(false)
+
+  // 요청 목록
+  const [requests, setRequests] = useState([])
 
   // 선택된 유저 정보 수정 요청을 관리하는 상태 변수
   const [selectedRequests, setSelectedRequests] = useState([])
@@ -33,16 +30,35 @@ const UserModificationTable = () => {
   // 검색어를 관리하는 상태 변수
   const [searchTerm, setSearchTerm] = useState('')
 
+  // 초기 request 받기
+  const fetchRequests = async () => {
+    try {
+      const result = await axios.get('/api/request')
+      setRequests(result.data)
+    } catch (error) {
+      console.error('Error fetching requests:', error)
+    }
+  }
+  useEffect(() => {
+    fetchRequests()
+  }, [])
+
   // 모달 열기 함수
   const toggleModal = () => {
     setModal(!modal)
   }
 
   // 선택된 유저 정보 수정 요청을 수락하는 함수
-  const handleAcceptRequests = () => {
+  const handleAcceptRequests = async () => {
     // 선택된 유저 정보 수정 요청에 대한 로직을 이곳에 추가
-    // (예: 서버로 수정된 데이터 전송)
-
+    try {
+      await axios.post('/api/request/patch', {
+        ids: selectedRequests,
+      })
+      await fetchRequests()
+    } catch (e) {
+      console.error('Error accepting requests:', e)
+    }
     // 모달 닫기
     toggleModal()
   }
@@ -73,28 +89,22 @@ const UserModificationTable = () => {
   // 전체 선택/해제 함수
   const handleSelectAll = () => {
     // 전체 선택 상태에 따라 선택된 유저 정보 수정 요청 업데이트
-    if (selectedRequests.length === userModificationRequests.length) {
+    if (selectedRequests.length === requests.length) {
       // 이미 모두 선택된 경우 모두 해제
       setSelectedRequests([])
     } else {
       // 아닌 경우 현재 필터링된 요청들만 선택
-      setSelectedRequests(
-        userModificationRequests
-          .filter(
-            (request) =>
-              request.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              request.request.toLowerCase().includes(searchTerm.toLowerCase()),
-          )
-          .map((request) => request.id),
-      )
+      setSelectedRequests(filteredRequests.map((request) => request.id))
     }
   }
 
   // 검색된 유저 정보 수정 요청 데이터 필터링 함수
-  const filteredRequests = userModificationRequests.filter(
+  const filteredRequests = requests.filter(
     (request) =>
-      request.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.request.toLowerCase().includes(searchTerm.toLowerCase()),
+      request.new_contents.korean_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.new_contents.english_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.new_contents.phone_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.new_contents.email.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   return (
@@ -128,8 +138,10 @@ const UserModificationTable = () => {
               />
             </th>
             <th>ID</th>
-            <th>유저 이름</th>
-            <th>수정 요청</th>
+            <th>국명</th>
+            <th>영문명</th>
+            <th>전화번호</th>
+            <th>이메일</th>
           </tr>
         </thead>
         <CTableBody>
@@ -144,8 +156,10 @@ const UserModificationTable = () => {
                 />
               </CTableDataCell>
               <CTableDataCell>{request.id}</CTableDataCell>
-              <CTableDataCell>{request.userName}</CTableDataCell>
-              <CTableDataCell>{request.request}</CTableDataCell>
+              <CTableDataCell>{request.new_contents.korean_name}</CTableDataCell>
+              <CTableDataCell>{request.new_contents.english_name}</CTableDataCell>
+              <CTableDataCell>{request.new_contents.phone_number}</CTableDataCell>
+              <CTableDataCell>{request.new_contents.email}</CTableDataCell>
             </CTableRow>
           ))}
         </CTableBody>

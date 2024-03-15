@@ -7,6 +7,8 @@ import { Provider } from 'react-redux'
 import store from './store'
 import { CookiesProvider } from 'react-cookie'
 
+document.getElementsByTagName('title')[0].innerHTML = 'KAIST Alumni Database'
+
 createRoot(document.getElementById('root')).render(
   <CookiesProvider>
     <Provider store={store}>

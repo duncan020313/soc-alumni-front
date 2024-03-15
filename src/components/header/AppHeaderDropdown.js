@@ -18,9 +18,14 @@ import avatar8 from './../../assets/images/avatars/admin01.jpeg'
 const AppHeaderDropdown = () => {
   const history = useNavigate()
   const logout = async () => {
-    const result = await axios.post('/api/auth/logout')
-    if (result.status === 200) {
+    try {
+      const result = await axios.get('/api/auth/logout')
+      if (result.status !== 200) {
+        throw new Error('로그아웃 실패')
+      }
       history('/login')
+    } catch (error) {
+      console.error('Logout failed:', error)
     }
   }
   return (

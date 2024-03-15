@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   CButton,
   CCard,
@@ -17,18 +17,31 @@ import CIcon from '@coreui/icons-react'
 import { cilLockLocked, cilUser } from '@coreui/icons'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import { sha512 } from 'sha.js'
 
 const Login = () => {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showAlert, setShowAlert] = useState(false)
+  const [hash, setHash] = useState('')
   const history = useNavigate()
 
+  useEffect(() => {
+    async function fetchData() {
+      const response = await axios.get('/api/auth/hash')
+      setHash(response.data)
+    }
+    fetchData()
+  }, [])
+
   const handleLogin = async () => {
+    const sha = new sha512()
+    const hashPassword = sha.update(password + hash).digest('hex')
+
     try {
       const response = await axios.post(
         '/api/auth/login',
-        { username, password },
+        { username, hashPassword },
         { withCredentials: true },
       )
       if (response.status !== 200) {

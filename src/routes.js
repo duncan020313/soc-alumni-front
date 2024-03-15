@@ -1,12 +1,15 @@
 import React from 'react'
 
-const Dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
+// Department
+const DepartmentList = React.lazy(() => import('./views/department/list/list'))
 
-// UserData
-const UserAddExcel = React.lazy(() => import('./views/user/addexcel/excel'))
-const UserData = React.lazy(() => import('./views/user/data/data'))
+// alumniData
+const alumniAddExcel = React.lazy(() => import('./views/alumni/addexcel/excel'))
+const alumniData = React.lazy(() => import('./views/alumni/data/data'))
+const alumniDownload = React.lazy(() => import('./views/alumni/download/download'))
+const alumniedit = React.lazy(() => import('./views/alumni/edit/edit'))
 
-// Request
+// request
 const RequestList = React.lazy(() => import('./views/request/list/list'))
 
 // message
@@ -14,13 +17,13 @@ const SendMessage = React.lazy(() => import('./views/message/send/send'))
 const MessageStatus = React.lazy(() => import('./views/message/status/status'))
 
 const routes = [
-  { path: '/', exact: true, name: 'Home' },
-  { path: '/dashboard', name: 'Dashboard', element: Dashboard },
-  { path: '/user', name: 'user', element: UserData, exact: true },
-  { path: '/user/addexcel', name: 'useraddexcel', element: UserAddExcel },
-  { path: '/user/data', name: 'userdata', element: UserData },
-  { path: '/request', name: 'request', element: RequestList, exact: true },
-  { path: '/request/list', name: 'requestlist', element: RequestList },
+  { path: '/department/list', name: 'departmentlist', element: DepartmentList },
+  { path: '/alumni', name: 'alumni', element: alumniData, exact: true },
+  { path: '/alumni/addexcel', name: 'alumniaddexcel', element: alumniAddExcel },
+  { path: '/alumni/data', name: 'alumnidata', element: alumniData },
+  { path: '/alumni/download', name: 'alumniedit', element: alumniDownload },
+  { path: '/alumni/edit', name: 'alumniedit', element: alumniedit },
+  { path: 'request/list', name: 'requestlist', element: RequestList },
   { path: '/message', name: 'message', element: SendMessage, exact: true },
   { path: '/message/send', name: 'messagesend', element: SendMessage },
   { path: '/message/status', name: 'messagestatus', element: MessageStatus },

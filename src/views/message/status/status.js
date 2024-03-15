@@ -1,5 +1,4 @@
-// 필요한 React 및 CoreUI 컴포넌트 및 기타 라이브러리 가져오기
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   CContainer,
   CRow,
@@ -7,156 +6,135 @@ import {
   CCard,
   CCardBody,
   CCardHeader,
-  CButton,
-  CModal,
-  CModalHeader,
-  CModalBody,
-  CModalFooter,
-  CTableBody,
   CTable,
+  CTableBody,
+  CTableHead,
   CTableRow,
   CTableDataCell,
+  CButton,
 } from '@coreui/react'
-import { CChartDoughnut } from '@coreui/react-chartjs'
+import axios from 'axios'
+import { Modal } from 'react-bootstrap'
 
-// 가상의 메시지 전송 상태 데이터 (실제 데이터는 여기 대신 서버에서 가져와야 함)
-const messageStatusData = {
-  total: 100,
-  sent: 30,
-  failed: 5,
-  remaining: 65,
-}
+const EmailLogViewer = () => {
+  const [logs, setLogs] = useState([])
+  const [selectedLog, setSelectedLog] = useState(null)
+  const [modalOpen, setModalOpen] = useState(false)
 
-// 가상의 메시지 발송 기록 데이터 (실제 데이터는 여기 대신 서버에서 가져와야 함)
-const messageHistory = [
-  {
-    id: 1,
-    sent: 30,
-    failed: 5,
-    remaining: 15,
-    details: [{ sender: 'User1', message: '안녕하세요' }],
-  },
-  { id: 2, sent: 25, failed: 3, remaining: 22, details: [{ sender: 'User2', message: 'Hello' }] },
-  // ... 추가적인 메시지 발송 기록 데이터
-]
+  useEffect(() => {
+    fetchLogs()
+  }, [])
 
-// React 함수형 컴포넌트 정의
-const MessageStatusScreen = () => {
-  // 모달 상태를 관리하는 상태 변수
-  const [modal, setModal] = useState(false)
-
-  // 선택된 메시지 발송 기록을 관리하는 상태 변수
-  const [selectedRecord, setSelectedRecord] = useState(null)
-
-  // 모달 열기 함수
-  const toggleModal = () => {
-    setModal(!modal)
+  const fetchLogs = async () => {
+    try {
+      const response = await axios.get('/api/message/log')
+      const data = response.data.sort((a, b) => new Date(b.sent_at) - new Date(a.sent_at))
+      setLogs(data)
+    } catch (error) {
+      console.error('Error fetching logs:', error)
+    }
   }
 
-  // 테이블의 자세히 보기 함수
-  const handleViewDetails = (record) => {
-    setSelectedRecord(record) // 여기에 실제 데이터가 있어야 함
-    toggleModal()
+  const getBadge = (status) => {
+    switch (status) {
+      case 'Success':
+        return 'success'
+      case 'Failed':
+        return 'danger'
+      default:
+        return 'primary'
+    }
   }
 
-  // 모달 닫기 함수
-  const handleCloseModal = () => {
-    setSelectedRecord(null)
-    toggleModal()
+  const toggleModal = (log) => {
+    setSelectedLog(log)
+    setModalOpen(!modalOpen)
   }
 
   return (
     <CContainer>
       <CRow>
-        {/* 그래프 영역 */}
-        <CCol md="6">
+        <CCol>
           <CCard>
             <CCardHeader>
-              <strong>메시지 전송 상태</strong>
+              <h5>Email Log Viewer</h5>
             </CCardHeader>
             <CCardBody>
-              {/* 전체 발송 인원 */}
-              <div className="text-center mb-4">
-                <h4>전체 발송 인원</h4>
-                <h2 className="font-weight-bold">{messageStatusData.total}</h2>
-              </div>
-
-              {/* 원 그래프 */}
-              <CChartDoughnut
-                data={{
-                  labels: ['발송됨', '실패', '남은 인원'],
-                  datasets: [
-                    {
-                      backgroundColor: ['#28A745', '#DC3545', '#007BFF'],
-                      data: [
-                        messageStatusData.sent,
-                        messageStatusData.failed,
-                        messageStatusData.remaining,
-                      ],
-                    },
-                  ],
-                }}
-              />
-            </CCardBody>
-          </CCard>
-        </CCol>
-
-        {/* 테이블 영역 */}
-        <CCol md="6">
-          <CCard>
-            <CCardHeader>
-              <strong>메시지 발송 기록</strong>
-            </CCardHeader>
-            <CCardBody>
-              {/* CTable을 사용한 테이블 */}
-              <CTable striped responsive>
+              <CTable striped hover responsive>
+                <CTableHead>
+                  <CTableRow>
+                    <CTableDataCell>Title</CTableDataCell>
+                    <CTableDataCell>Sent Date</CTableDataCell>
+                    <CTableDataCell>Recipients Count</CTableDataCell>
+                    <CTableDataCell>Status</CTableDataCell>
+                    <CTableDataCell>Details</CTableDataCell>
+                  </CTableRow>
+                </CTableHead>
                 <CTableBody>
-                  {messageHistory.map((record) => (
-                    <CTableRow key={record.id} onClick={() => handleViewDetails(record)}>
-                      <CTableDataCell>{record.id}</CTableDataCell>
-                      <CTableDataCell>{record.sent}</CTableDataCell>
-                      <CTableDataCell>{record.failed}</CTableDataCell>
-                      <CTableDataCell>{record.remaining}</CTableDataCell>
+                  {logs.map((log) => (
+                    <CTableRow key={log.id}>
+                      <CTableDataCell>{log.title}</CTableDataCell>
+                      <CTableDataCell>{log.sent_at}</CTableDataCell>
+                      <CTableDataCell>{log.receiver.length}</CTableDataCell>
+                      <CTableDataCell>
+                        <CButton
+                          color={getBadge(log.status)}
+                          shape="pill"
+                          size="sm"
+                          onClick={() => toggleModal(log)}
+                        >
+                          {log.status}
+                        </CButton>
+                      </CTableDataCell>
+                      <CTableDataCell>
+                        <CButton
+                          color="primary"
+                          shape="pill"
+                          size="sm"
+                          onClick={() => toggleModal(log)}
+                        >
+                          View Details
+                        </CButton>
+                      </CTableDataCell>
                     </CTableRow>
                   ))}
                 </CTableBody>
               </CTable>
-
-              {/* 테이블의 자세히 보기 모달 */}
-              <CModal visible={modal} size="lg">
-                <CModalHeader closeButton>메시지 발송 기록 - 자세히 보기</CModalHeader>
-                <CModalBody>
-                  {/* 선택된 메시지 발송 기록의 자세한 내용 */}
-                  {selectedRecord && (
-                    <div>
-                      <p>
-                        <strong>메시지 보낸 사람 수:</strong> {selectedRecord.sent}
-                      </p>
-                      <p>
-                        <strong>보낸 메시지:</strong>
-                      </p>
-                      <ul>
-                        {selectedRecord.details.map((detail, index) => (
-                          <li key={index}>
-                            <strong>{detail.sender}:</strong> {detail.message}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </CModalBody>
-                <CModalFooter>
-                  <CButton color="secondary" onClick={handleCloseModal}>
-                    닫기
-                  </CButton>
-                </CModalFooter>
-              </CModal>
             </CCardBody>
           </CCard>
         </CCol>
       </CRow>
+
+      {/* react-bootstrap Modal */}
+      <Modal show={modalOpen} onHide={() => toggleModal(null)} size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>Email Log Details</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {selectedLog && (
+            <div>
+              <p>
+                <strong>Title:</strong> {selectedLog.title}
+              </p>
+              <p>
+                <strong>Sent Date:</strong> {selectedLog.sent_at}
+              </p>
+              <p>
+                <strong>Recipients Count:</strong> {selectedLog.receiver.length}
+              </p>
+              <p>
+                <strong>Status:</strong> {selectedLog.status}
+              </p>
+              <p>
+                <strong>Content:</strong>
+                <div dangerouslySetInnerHTML={{ __html: selectedLog.content }} />
+              </p>
+            </div>
+          )}
+        </Modal.Body>
+      </Modal>
     </CContainer>
   )
 }
 
-export default MessageStatusScreen
+export default EmailLogViewer
