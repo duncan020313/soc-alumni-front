@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useTable, useFilters, useGlobalFilter } from 'react-table'
 import { CContainer, CRow, CCol, CCard, CCardBody, CCardHeader, CFormInput } from '@coreui/react'
 import axios from 'axios'
+import { columns as C } from '../../../utils'
 
 const AlumniTable = () => {
   const [alumniData, setAlumniData] = useState([])
@@ -18,11 +19,13 @@ const AlumniTable = () => {
             7,
           )}월 ${birthday.slice(8, 10)}일`
           const degree = alumni['degree']
-          const student_id = degree.map((d) => d['student_id'])
-          const education = degree.sort((a, b) => b['id'] - a['id']).reverse()[0]['name']
-          alumni['student_id'] = student_id.join(', ')
-          alumni['agree'] = alumni['agree'] ? '동의' : '비동의'
-          alumni['education'] = education
+          if (degree.length !== 0) {
+            const student_id = degree.map((d) => d['student_id'])
+            const education = degree.sort((a, b) => b['id'] - a['id']).reverse()[0]['name']
+            alumni['student_id'] = student_id.join(', ')
+            alumni['agree'] = alumni['agree'] ? '동의' : '비동의'
+            alumni['education'] = education
+          }
           return alumni
         })
         setAlumniData(data)
@@ -38,51 +41,7 @@ const AlumniTable = () => {
 
   const data = React.useMemo(() => alumniData, [alumniData])
 
-  const columns = React.useMemo(
-    () => [
-      {
-        Header: '이름',
-        accessor: 'korean_name',
-      },
-      {
-        Header: '영문 이름',
-        accessor: 'english_name',
-      },
-      {
-        Header: '학번',
-        accessor: 'student_id',
-      },
-      {
-        Header: '성별',
-        accessor: 'gender',
-      },
-      {
-        Header: '국가',
-        accessor: 'country_name',
-      },
-      {
-        Header: '생일',
-        accessor: 'birthday',
-      },
-      {
-        Header: '휴대전화',
-        accessor: 'phone_number',
-      },
-      {
-        Header: '이메일',
-        accessor: 'email',
-      },
-      {
-        Header: '개인 정보 동의 여부',
-        accessor: 'agree',
-      },
-      {
-        Header: '과정',
-        accessor: 'education',
-      },
-    ],
-    [],
-  )
+  const columns = React.useMemo(C, [])
 
   const {
     getTableProps,
@@ -112,33 +71,39 @@ const AlumniTable = () => {
                 value={globalFilter}
                 onChange={(e) => setGlobalFilter(e.target.value)}
               />
-              <table {...getTableProps()} className="table table-bordered">
-                <thead>
-                  {headerGroups.map((headerGroup) => (
-                    <tr key={headerGroup.id} {...headerGroup.getHeaderGroupProps()}>
-                      {headerGroup.headers.map((column) => (
-                        <th key={column.id} {...column.getHeaderProps()}>
-                          {column.render('Header')}
-                        </th>
-                      ))}
-                    </tr>
-                  ))}
-                </thead>
-                <tbody {...getTableBodyProps()}>
-                  {rows.map((row, index) => {
-                    prepareRow(row)
-                    return (
-                      <tr key={index} {...row.getRowProps()}>
-                        {row.cells.map((cell, cellIndex) => (
-                          <td key={cellIndex} {...cell.getCellProps()}>
-                            {cell.render('Cell')}
-                          </td>
+              <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                <table {...getTableProps()} className="table table-bordered">
+                  <thead>
+                    {headerGroups.map((headerGroup) => (
+                      <tr key={headerGroup.id} {...headerGroup.getHeaderGroupProps()}>
+                        {headerGroup.headers.map((column) => (
+                          <th
+                            key={column.id}
+                            {...column.getHeaderProps()}
+                            style={{ minWidth: '100px' }}
+                          >
+                            {column.render('Header')}
+                          </th>
                         ))}
                       </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+                    ))}
+                  </thead>
+                  <tbody {...getTableBodyProps()}>
+                    {rows.map((row, index) => {
+                      prepareRow(row)
+                      return (
+                        <tr key={index} {...row.getRowProps()}>
+                          {row.cells.map((cell, cellIndex) => (
+                            <td key={cellIndex} {...cell.getCellProps()}>
+                              {cell.render('Cell')}
+                            </td>
+                          ))}
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
               {loading && <p>Loading...</p>}
             </CCardBody>
           </CCard>

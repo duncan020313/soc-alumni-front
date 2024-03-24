@@ -16,6 +16,7 @@ import * as XLSX from 'xlsx'
 import { translateColumnKorToEng } from '../../../utils'
 import { toast, ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
+import { UTC2KOR } from '../../../utils'
 
 const ExcelUploader = () => {
   const [excelData, setExcelData] = useState(null)
@@ -43,16 +44,40 @@ const ExcelUploader = () => {
     reader.onload = (e) => {
       const data = new Uint8Array(e.target.result)
       const workbook = XLSX.read(data, { type: 'array' })
-      const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]])
-      setExcelData(
-        jsonData.map((item) => {
-          const translatedItem = translateColumnKorToEng(item)
+      const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {
+        raw: false,
+      })
+      console.log(jsonData[0])
+      const translatedData = jsonData.map((item) => {
+        const translatedItem = translateColumnKorToEng(item)
+
+        if ('student_id' in translatedItem) {
           translatedItem['student_id'] = translatedItem['student_id'].toString()
+        }
+        if ('birthday' in translatedItem) {
+          translatedItem['birthday'] = UTC2KOR(new Date(translatedItem['birthday']))
+        }
+        if ('consent_provide_info' in translatedItem) {
+          translatedItem['consent_provide_info'] = translatedItem['consent_provide_info'] === 'Y'
+        }
+        if ('consent_third_person' in translatedItem) {
+          translatedItem['consent_third_person'] = translatedItem['consent_third_person'] === 'Y'
+        }
+        if (!('country_name' in translatedItem)) {
+          translatedItem['country_name'] = '대한민국'
+        }
+        if (!('department' in translatedItem)) {
           translatedItem['department'] = selectedDepartments
-          translatedItem['agree'] = parseInt(translatedItem['agree'])
-          return translatedItem
-        }),
-      )
+        }
+        return translatedItem
+      })
+      const filteredTranslatedData = translatedData.filter((item) => {
+        if ('department' in item && item['department'] === selectedDepartments) {
+          return true
+        }
+        return false
+      })
+      setExcelData(filteredTranslatedData)
     }
   }
 

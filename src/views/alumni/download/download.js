@@ -63,7 +63,7 @@ const AlumniDownload = () => {
           return alumni.degree.map((d) => {
             const copiedAlumni = { ...alumni }
             delete copiedAlumni.preserve
-            copiedAlumni.degree = d.name + '과정'
+            copiedAlumni.degree = d.name
             copiedAlumni['department'] = d.department.name
             copiedAlumni['professor'] = d.professor.name
             const translatedAlumni = translateColumnEngToKor(copiedAlumni)
